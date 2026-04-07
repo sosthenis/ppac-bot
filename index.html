@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PPAC Bot — Mestrado UFC</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0b1c3e;
+      --navy2:  #0d2352;
+      --blue:   #1a3a7c;
+      --accent: #2d6cdf;
+      --glow:   #4d9fff;
+      --white:  #ffffff;
+      --ice:    #d6e8ff;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--navy);
+      color: var(--white);
+    }
+
+    /* ── Animated gradient background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(29,82,176,0.35) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(45,108,223,0.25) 0%, transparent 65%),
+        linear-gradient(160deg, #0b1c3e 0%, #0d2352 50%, #0a1830 100%);
+      animation: bgShift 10s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+
+    @keyframes bgShift {
+      from { filter: brightness(1); }
+      to   { filter: brightness(1.12); }
+    }
+
+    /* ── Particle stars ── */
+    #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: var(--white);
+      opacity: 0;
+      animation: twinkle var(--d) ease-in-out infinite var(--delay);
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: 0; transform: scale(0.5); }
+      50%      { opacity: var(--op); transform: scale(1); }
+    }
+
+    /* ── Layout ── */
+    .scene {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .header .logo-line {
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--ice);
+      opacity: 0.7;
+      margin-bottom: 6px;
+    }
+    .header h1 {
+      font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+    }
+    .header h1 span {
+      color: var(--glow);
+    }
+    .header .subtitle {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--ice);
+      opacity: 0.65;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--glow), transparent);
+      border-radius: 2px;
+      margin: 12px auto 20px;
+      animation: divPulse 3s ease-in-out infinite;
+    }
+    @keyframes divPulse {
+      0%,100% { opacity: 0.4; width: 60px; }
+      50%      { opacity: 1;   width: 100px; }
+    }
+
+    /* ── Avatar wrapper ── */
+    .avatar-wrap {
+      position: relative;
+      width: clamp(200px, 28vw, 300px);
+      height: clamp(200px, 28vw, 300px);
+      cursor: pointer;
+      animation: float 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 28px rgba(77,159,255,0.55));
+      transition: filter 0.3s;
+    }
+    .avatar-wrap:hover {
+      filter: drop-shadow(0 0 48px rgba(77,159,255,0.9));
+    }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0px) rotate(-0.5deg); }
+      50%      { transform: translateY(-18px) rotate(0.5deg); }
+    }
+
+    /* Halo ring */
+    .halo {
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      border: 2px solid rgba(77,159,255,0.35);
+      animation: haloSpin 6s linear infinite;
+    }
+    .halo::after {
+      content: '';
+      position: absolute;
+      top: -4px; left: 30%;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--glow);
+      box-shadow: 0 0 12px var(--glow);
+    }
+    @keyframes haloSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Second slower halo */
+    .halo2 {
+      position: absolute;
+      inset: -28px;
+      border-radius: 50%;
+      border: 1px solid rgba(77,159,255,0.15);
+      animation: haloSpin 10s linear infinite reverse;
+    }
+    .halo2::after {
+      content: '';
+      position: absolute;
+      bottom: -3px; right: 25%;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--ice);
+      box-shadow: 0 0 8px var(--ice);
+    }
+
+    /* Avatar image */
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 28px;
+      object-fit: cover;
+      object-position: center top;
+      border: 3px solid rgba(77,159,255,0.3);
+      display: block;
+      background: #1565c0;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.2);
+    }
+
+    /* ── CTA Button ── */
+    .cta-wrap {
+      margin-top: 32px;
+      text-align: center;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--accent) 0%, #1756b8 100%);
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 4px 24px rgba(45,108,223,0.5),
+        0 0 0 0 rgba(77,159,255,0.4);
+      animation: btnPulse 2.5s ease-in-out infinite;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .cta-btn:hover {
+      transform: scale(1.05);
+      box-shadow:
+        0 8px 36px rgba(45,108,223,0.7),
+        0 0 0 8px rgba(77,159,255,0.15);
+    }
+    .cta-btn:active { transform: scale(0.97); }
+
+    @keyframes btnPulse {
+      0%,100% { box-shadow: 0 4px 24px rgba(45,108,223,0.5), 0 0 0 0 rgba(77,159,255,0.4); }
+      50%      { box-shadow: 0 4px 24px rgba(45,108,223,0.5), 0 0 0 10px rgba(77,159,255,0); }
+    }
+
+    /* Shimmer sweep */
+    .cta-btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -75%;
+      width: 50%; height: 100%;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.25), transparent);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%   { left: -75%; }
+      100% { left: 150%; }
+    }
+
+    .cta-btn .icon {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer tag ── */
+    .footer-tag {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.68rem;
+      color: var(--ice);
+      opacity: 0.35;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      z-index: 2;
+    }
+
+    /* ── Pulse ring on click ── */
+    .ripple {
+      position: fixed;
+      border-radius: 50%;
+      border: 2px solid var(--glow);
+      width: 10px; height: 10px;
+      pointer-events: none;
+      animation: rippleOut 0.7s ease-out forwards;
+      z-index: 999;
+    }
+    @keyframes rippleOut {
+      from { transform: translate(-50%,-50%) scale(1); opacity: 0.8; }
+      to   { transform: translate(-50%,-50%) scale(12); opacity: 0; }
+    }
+
+    /* ── Tooltip bubble ── */
+    .bubble {
+      position: absolute;
+      bottom: calc(100% + 20px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13,35,82,0.95);
+      border: 1px solid rgba(77,159,255,0.4);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 0.82rem;
+      color: var(--ice);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      animation: bubblePop 6s ease-in-out infinite 2s;
+      backdrop-filter: blur(6px);
+    }
+    .bubble::after {
+      content: '';
+      position: absolute;
+      top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(13,35,82,0.95);
+    }
+    @keyframes bubblePop {
+      0%,15%,65%,100% { opacity: 0; transform: translateX(-50%) translateY(6px); }
+      20%,60%         { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Particle layer -->
+<div id="stars"></div>
+
+<div class="scene">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-line">Universidade Federal do Ceará &nbsp;·&nbsp; Mestrado</div>
+    <h1>Assistente Virtual <span>PPAC</span></h1>
+    <div class="subtitle">Programa de Pós-Graduação em Administração e Controladoria</div>
+    <div class="divider"></div>
+  </div>
+
+  <!-- Avatar -->
+  <div class="avatar-wrap" id="avatarBtn" title="Acessar Conteúdo do PPAC">
+    <div class="halo2"></div>
+    <div class="halo"></div>
+
+    <!-- Speech bubble -->
+    <div class="bubble">Olá! Clique em mim para começar</div>
+
+    <!--
+      INSTRUÇÃO: salve a imagem do avatar com o nome "avatar.png"
+      na mesma pasta deste arquivo HTML.
+    -->
+    <img
+      src="avatar.png"
+      alt="Bot PPAC"
+      class="avatar-img"
+      onerror="this.style.background='linear-gradient(135deg,#1a3a7c,#2d6cdf)';this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🤖</text></svg>'"
+    />
+  </div>
+
+  <!-- CTA Button -->
+  <div class="cta-wrap">
+    <button class="cta-btn" id="ctaBtn">
+      <!-- Book icon -->
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+      </svg>
+      Acessar Conteúdo do PPAC
+      <!-- Arrow icon -->
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </button>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer-tag">PPAC UFC COGERH 2026 &nbsp;|&nbsp; Powered by @Sosthenis</div>
+
+<script>
+  // ── 1. CONFIGURE O LINK AQUI ────────────────────────────────────────────
+  //       Substitua pela URL real da sua LLM / chatbot / plataforma
+  const DESTINATION = 'https://chatgpt.com/g/g-p-69d43bead06c8191bec52604af9f53ae-assistente-ppac/project';
+  // ────────────────────────────────────────────────────────────────────────
+
+  // Mascarar o link: resolve via JS, sem href visível no HTML
+  function go(e) {
+    // Ripple visual
+    const r = document.createElement('div');
+    r.className = 'ripple';
+    r.style.left = (e?.clientX ?? window.innerWidth/2) + 'px';
+    r.style.top  = (e?.clientY ?? window.innerHeight/2) + 'px';
+    document.body.appendChild(r);
+    r.addEventListener('animationend', () => r.remove());
+
+    // Pequeno delay para o ripple aparecer antes de redirecionar
+    setTimeout(() => { window.open(DESTINATION, '_blank', 'noopener,noreferrer'); }, 350);
+  }
+
+  document.getElementById('avatarBtn').addEventListener('click', go);
+  document.getElementById('ctaBtn').addEventListener('click', go);
+
+  // ── 2. Gerar estrelas aleatórias ────────────────────────────────────────
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width: ${sz}px; height: ${sz}px;
+      top: ${Math.random() * 100}%;
+      left: ${Math.random() * 100}%;
+      --d: ${(Math.random() * 4 + 2).toFixed(1)}s;
+      --delay: ${(Math.random() * 6).toFixed(1)}s;
+      --op: ${(Math.random() * 0.6 + 0.2).toFixed(2)};
+    `;
+    starsEl.appendChild(s);
+  }
+
+  // ── 3. Floating particles (tiny orbs) ───────────────────────────────────
+  (function spawnOrbs() {
+    const scene = document.querySelector('.scene');
+    setInterval(() => {
+      const orb = document.createElement('div');
+      const sz = Math.random() * 5 + 2;
+      orb.style.cssText = `
+        position: fixed;
+        width: ${sz}px; height: ${sz}px;
+        border-radius: 50%;
+        background: rgba(77,159,255,${(Math.random()*0.3+0.1).toFixed(2)});
+        left: ${Math.random()*100}vw;
+        top: 110vh;
+        pointer-events: none;
+        z-index: 0;
+        animation: riseUp ${(Math.random()*8+6).toFixed(1)}s linear forwards;
+      `;
+      document.body.appendChild(orb);
+      orb.addEventListener('animationend', () => orb.remove());
+    }, 800);
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes riseUp {
+        from { transform: translateY(0) scale(1); opacity: 0.8; }
+        to   { transform: translateY(-120vh) scale(0.3); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+</script>
+</body>
+</html>
